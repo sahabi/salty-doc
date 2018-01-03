@@ -6,3 +6,5 @@ user-man
 *.out
 *.ndx
 *.toc
+*.adx
+*.idx
