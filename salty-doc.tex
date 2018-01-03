@@ -1,14 +1,14 @@
 \documentclass{report}[10pt]
 \usepackage[bookmarks=true]{hyperref}
-\usepackage{nusmv}
+\usepackage{salty}
 \makeindex
 \listfiles
 \begin{document}
 \sloppypar
 \bibliographystyle{alpha}
-
-\input{title}
 \pagenumbering{arabic}
+\input{title}
+
 
 \tableofcontents
 
@@ -19,7 +19,6 @@
 \label{Input Language}
 \input{syntax}
 
-
 % Just to include all citations 
 \input{citeall}
 
@@ -27,10 +26,6 @@
 \bibliography{main}
 
 \newpage
-\appendix
-\input{app}
-\input{typerulesapp}
-\input{app_grammar}
 
 \cleardoublepage
 
@@ -41,4 +36,3 @@
 
 \end{document}
 \endinput
-\end{document}
