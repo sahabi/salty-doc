@@ -1,25 +1,44 @@
-\documentclass{refart}
-\usepackage[utf8]{inputenc}
+\documentclass{report}[10pt]
+\usepackage[bookmarks=true]{hyperref}
+\usepackage{nusmv}
+\makeindex
+\listfiles
 \begin{document}
+\sloppypar
+\bibliographystyle{alpha}
 
-\section{Problem Statement}
+\input{title}
+\pagenumbering{arabic}
 
-We want to develop a protocol for each UAV to follow. The protocol should guarantee that no two UAVs collide while conducting missions. Every UAV can have one or more disjointed operating regions. We assume that these operating regions are predefined and immutable. A corridor exists between every pair of operating regions of a UAV.
+\tableofcontents
 
-There are four points to considers. 1) adhere to a minimum separation distance between UAVs. 2) there are times where there are no communications between UAVs. 3) a leader election mechanism for deadlock prevention. 4) the operating regions and the corridors connecting them need to be formalized. A visibility graph is one way to model the air space.
-
-At each time step, the UAV either remains in its region i or moves to another region j via the corridor (i, j). We model the regions as nodes and the corridors as edges in a visibility graph.
-
-\section{Implementation}
-
-To ensure that no two UAVs collide while moving between their operating regions we compute op
-
-1) compute a visibility graph for each combination of the following:
-
-1) the subject UAV
-2) all the other UAVs requested corridors
-
-For example, at every step, each UAV x declares where it wants to go to.  $(i_1,j_1) ... (i_n,j_n)$. We assume that for each UAV there exist a visibility graph that has an edge between its origin and destination. This visibility graph does not intersect with any of the other UAVs visibility graphs.
+\chapter{Introduction}
+\label{Introduction}
+\input{intro}
+\chapter{Input Language}
+\label{Input Language}
+\input{syntax}
 
 
+% Just to include all citations 
+\input{citeall}
+
+% Print bibliography here.
+\bibliography{main}
+
+\newpage
+\appendix
+\input{app}
+\input{typerulesapp}
+\input{app_grammar}
+
+\cleardoublepage
+
+% Print Indices here 
+\printindex[com]
+\printindex[var]
+\printindex
+
+\end{document}
+\endinput
 \end{document}

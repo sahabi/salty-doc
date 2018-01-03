@@ -2,3 +2,7 @@ user-man
 *.gz
 *.log
 *.aux
+*.toc
+*.out
+*.ndx
+*.toc
