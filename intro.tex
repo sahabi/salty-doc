@@ -1,3 +1,76 @@
 % -*-latex-*-
-Salty is a strongly-typed language for aiding GR(1) synthesis that provides a front-end to the Slugs synthesis tool. \cite{CCGR00}.
 
+\section{Salty Description}
+
+Salty is a strongly-typed domain specific language for aiding GR(1) synthesis that provides a front-end to the Slugs synthesis tool. 
+
+\section{Current State}
+
+Salty is currently under active development, and can be used to produce Java source from a GR(1) specification.
+
+\section{Language Goals}
+
+Make controller specifications easier to read by
+Allowing macro definitions to give a name to complex behavior
+Adding syntactic-sugar for things like if-then-else
+Allowing state variables to range over values of an enumeration, rather than just integer values
+Integrate with the slugs GR(1) synthesizer for the heavy lifting
+Generate controller implementations in python, and potentially java
+
+\section{Building Salty}
+
+\subsection{Dependencies}
+
+\subsubsection{Stack}
+
+It is easiest to build salty using the stack tool. Stack will manage the installation of all haskell dependencies, as well as the GHC compiler itself. One downside to using stack is that it won't automatically pull changes from the language-slugs repository.
+
+\subsubsection{Slugs}
+
+You will need to build and install the slugs GR(1) synthesis tool. Once installed, you can tell salty where to find the slugs executable by passing the -s or --slugs flag. There is no installation target in the slugs Makefile, however the slugs executable has no runtime dependencies, and can just be copied into your \$PATH.
+
+\subsubsection{Z3}
+
+Salty will do some additional sanity checking of specifications before sending them to slugs. On linux, z3 is likely available in your package manager, and on OSX it's available through homebrew
+
+\subsection{Building}
+
+Once stack and slugs are installed, salty can be built:
+
+\begin{lstlisting}[language=bash]
+$ stack build
+\end{lstlisting}
+Optionally, you can install salty globally using the stack install command, which will place the salty binary in \$HOME/.local/bin.
+The examples can be built by running make in the examples/ directory, and will place all of the generated Java code in the examples/build directory.
+
+\subsection{Running}
+\begin{lstlisting}[language=bash]
+$ salty [OPTIONS] <controller.salt>
+\end{lstlisting}
+
+\subsubsection{Input options}
+
+\begin{center}
+\begin{tabular}{l@{\qquad}l}
+-h --help                    & Display the help message \\
+-a --annotations             & Output information about annotations \\
+-j[PACKAGE] --java[=PACKAGE] & Output a java implementation of the controller, as this package\\
+-p --python                  & Output a python implementation of the controller\\
+-d --dot                     & Output a graphviz representation of the controller\\
+--cpp[=NAMESPACE]            & Output a C++ implementation of the controller\\
+-o PATH --output=PATH        & Optional output directory for artifacts\\
+-s PATH --slugs=PATH         & The path to the slugs executable\\
+-z PATH --z3=PATH            & The path to the z3 executable\\
+-l N --length=N              & The number of input variables in the slugs output\\
+-O NUMBER                    & Enable/disable optimizations by passing 0/1\\
+--disable-sanity             & Disable the sanity checker\\
+--ddump-parse                & Dump the parse tree for the controller\\
+--ddump-core                 & Dump the core representation of the type-checked controller\\
+--ddump-expanded             & Dump the expanded form of the controller\\
+--ddump-simpl                & Dump the simplified expanded form of the controller\\
+--ddump-opt                  & Dump the optimized core representation of the type-checked controller\\
+--ddump-spec                 & Dump the input to slugs and its output\\
+--ddump-sanity               & Dump intermediate output during sanity checking\\
+
+\end{tabular}
+\end{center}

@@ -1,0 +1,24 @@
+\section{Enumerations}
+
+Sometimes you will have multiple input or output variables whose values are all mutually exclusive. In this case, there are two features that Salty provides to ease implementation:
+
+You can use the mutex built-in function to show that at most one of a set of variables is allowed to be true
+You can define a new enumeration for all of the values, and use one input or output instead of the mutually exclusive group (NOTE: this requires that all variables be either inputs or outputs, but not a mix of the two)
+For the first approach, the resulting controller fragment looks like this:
+\begin{lstlisting}
+input a : Bool
+input b : Bool
+input c : Bool
+
+env_trans mutex \{a, b, c\}
+\end{lstlisting}
+This states that there are three boolean inputs, and that the environment will only ever assert at most one of them. The mutex function accepts a set of boolean-typed expressions, and produces a boolean-typed expression.
+
+While this approach does work, it doesn't scale well; each input defined in a controller adds to the complexity of the state machine that is produced. Salty provides a way to retain the mutually exclusive characteristics of the input, while lowering the number of variables required through the use of an enumeration. Translating the example above yields:
+\begin{lstlisting}
+enum T = A | B | C
+input x : T
+\end{lstlisting}
+The choice of names here is arbitrary: T is just the name of the type of the enumeration, and A, B, and C are just chosen to reflect the intent of the original controller. The input name x is not significant.
+
+This yields a controller that only requires two input variables, as the input x is translated into a bit-vector of size two. The result is that as the number of possible cases for an enumeration grow, the size of the bit-vector grows at log\_2 of the number of constructors.
