@@ -17,7 +17,7 @@ Allowing state variables to range over values of an enumeration, rather than jus
 Integrate with the slugs GR(1) synthesizer for the heavy lifting
 Generate controller implementations in python, and potentially java
 
-\section{Building Salty}
+\section{Getting Started}
 
 \subsection{Dependencies}
 
@@ -38,14 +38,18 @@ Salty will do some additional sanity checking of specifications before sending t
 Once stack and slugs are installed, salty can be built:
 
 \begin{lstlisting}[language=bash]
-$ stack build
+system_prompt> stack build
 \end{lstlisting}
+
 Optionally, you can install salty globally using the stack install command, which will place the salty binary in \$HOME/.local/bin.
 The examples can be built by running make in the examples/ directory, and will place all of the generated Java code in the examples/build directory.
 
 \subsection{Running}
+
+You can run Salty with the .salt file as an input along with a suitable option(s). The input options are listed below.
+
 \begin{lstlisting}[language=bash]
-$ salty [OPTIONS] <controller.salt>
+system_prompt> salty [OPTIONS] <controller.salt>
 \end{lstlisting}
 
 \subsubsection{Input options}

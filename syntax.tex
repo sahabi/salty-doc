@@ -28,15 +28,15 @@ The main compilation unit in Salty is the controller. A controller consists of a
 
 \noindent The syntax for controllers is specified by the following grammar fragment:
 
-\begin{lstlisting}
-Identifier      = lower-case-letter { IdentifierRest } ;
+\begin{Grammar}
+  Identifier      :: lower-case-letter \textbf{\{} IdentifierRest \textbf{\}} ;
 
-UpperIdentifier = upper-case-letter { IdentifierRest } ;
+  UpperIdentifier :: upper-case-letter \textbf{\{} IdentifierRest \textbf{\}} ;
 
-IdentifierRest  = letter | '0' - '9' | '_' ;
+  IdentifierRest  :: letter | '0' - '9' | '_' ;
 
-Controller      = 'controller' UpperIdentifier 'where' TopDecls ;
-\end{lstlisting}
+  Controller      :: 'controller' UpperIdentifier 'where' TopDecls ;
+\end{Grammar}
 
 \section{Top-level Declarations}
 
@@ -56,12 +56,13 @@ input b : Bool
   input b : Bool
 \end{lstlisting}
 \noindent The top-level declaration grammar is determined by the following grammar fragments:
-\begin{lstlisting}
-TopDecls = TopDecl | TopDecl 'v;' TopDecls | <empty> ;
+\begin{Grammar}
+  TopDecls :: TopDecl | TopDecl 'v;' TopDecls | <empty> ;
 
-TopDecl = InputDecl | OutputDecl | EnumDecl
+  TopDecl :: InputDecl | OutputDecl | EnumDecl
         | Constraint | MacroDecl ;
-\end{lstlisting}
+  EnumDecl :: 'enum' UpperIdent '=' UpperIdent { '|' UpperIdent }
+\end{Grammar}
 
 \section{Types}
 
@@ -73,40 +74,59 @@ Int is the type of numeric expressions.
 Spec is the type of constraints, which will be defined in the [Constraints] section.
 The types are described by the following grammar:
 
-\begin{lstlisting}
-Type = 'Bool' | 'Int' | UpperIdentifier | Type '->' Type
-\end{lstlisting}
+\begin{Grammar}
+  Type :: 'Bool' | 'Int' | UpperIdentifier | Type '->' Type
+\end{Grammar}
 
 \section{Enumerations}
 
-Enumerations allow users to introduce a new type and its values. The syntax for introducing an enumeration type is shown below.
+Enumerations allow users to introduce a new type and its values. Sometimes you will have multiple input or output variables whose values are all mutually exclusive. In this case, there are two features that Salty provides to ease implementation:
+
+\begin{itemize}
+
+\item You can use the mutex built-in function to show that at most one of a set of variables is allowed to be true
+\item You can define a new enumeration for all of the values, and use one input or output instead of the mutually exclusive group (NOTE: this requires that all variables be either inputs or outputs, but not a mix of the two)
+\end{itemize}
+
+For the first approach, the resulting controller fragment looks like this:
+
 \begin{lstlisting}
-EnumDecl = 'enum' UpperIdent '=' UpperIdent { '|' UpperIdent }
+input a : Bool
+input b : Bool
+input c : Bool
+
+env_trans mutex \{a, b, c\}
 \end{lstlisting}
-For example, if you needed to express a number of different locations as an input to your controller, this would be one way to describe that scenario:
+
+This states that there are three boolean inputs, and that the environment will only ever assert at most one of them. The mutex function accepts a set of boolean-typed expressions, and produces a boolean-typed expression.
+
+While this approach does work, it doesn't scale well; each input defined in a controller adds to the complexity of the state machine that is produced. Salty provides a way to retain the mutually exclusive characteristics of the input, while lowering the number of variables required through the use of an enumeration. Translating the example above yields:
 \begin{lstlisting}
-enum Locations = Home | Work | InTransit
-input current_location : Locations
+enum T = A | B | C
+input x : T
 \end{lstlisting}
-With this controller fragment, the user may write constraints about the value of current\_location, with the confidence that it is always one of the values of the Location enumeration (Home, Work, or InTransit).
+The choice of names here is arbitrary: T is just the name of the type of the enumeration, and A, B, and C are just chosen to reflect the intent of the original controller. The input name x is not significant.
+
+This yields a controller that only requires two input variables, as the input x is translated into a bit-vector of size two. The result is that as the number of possible cases for an enumeration grow, the size of the bit-vector grows at log\_2 of the number of constructors.\begin{lstlisting}
+\end{lstlisting}
 
 \section{Expressions}
 
 Expressions can be constants, variables, macro invocations or combinations of those using built-in operators.
-\begin{lstlisting}
-Exprs = Expr | Expr 'v;' Exprs
+\begin{Grammar}
+    Exprs :: Expr | Expr 'v;' Exprs
 
-Constant = 'True' | 'False' | integer | UpperIdent
+    Constant :: 'True' | 'False' | integer | UpperIdent
 
-Expr = Identifier | Number | Constant | Identifier '(' ExprArgs ')'
+    Expr :: Identifier | Number | Constant | Identifier '(' ExprArgs ')'
      | '{' ExprArgs '}' | 'mutex' Expr | 'all' Expr | 'any' Expr
      | Expr Op Expr | '!' Expr
      | 'if' Expr 'then' Expr 'else' Expr
 
-Op = '||' | '\/' | '\&\&' | '/\\' | '==' | '->' | '<->'
+    Op :: '||' | '\/' | '\&\&' | '/\\' | '==' | '->' | '<->'
 
-ExprArgs = Expr | Expr ',' Args
-\end{lstlisting}
+    ExprArgs :: Expr | Expr ',' Args
+\end{Grammar}
 
 For example, if there is one boolean input, and one boolean output, and you wish to make the value of the output the same as the value of the input, the following controller fragment would achieve that goal:
 
@@ -125,25 +145,25 @@ In some cases, this construct can increase the readability of a specification, b
 \section{Inputs and Outputs}
 
 Input and output declarations define how the controller can interact with the world. Inputs and outputs both follow the same basic structure, but differ in the keyword used to introduce them. The general form is shown below:
-\begin{lstlisting}
-VarDecl = 'input' | 'output'
+\begin{Grammar}
+  VarDecl :: 'input' | 'output'
 
-InputDecl = VarDecl Identifier ':' Type [ InitValue ]
+  InputDecl :: VarDecl Identifier ':' Type [ InitValue ]
 
-InitValue = '=' Expr
-\end{lstlisting}
+  InitValue :: '=' Expr
+\end{Grammar}
 Both inputs and outputs have optional initial values, which allows the user to constrain the initial state of the state machine produced. If the initial values are left unspecified for either, the resulting state machine can be a little more complicated.
 
 \section{Constraints}
 
 The behavior of the desired state machine is described by adding safety and liveness constraints on either the environment or system, as top-level declarations. Each of the constraint declaraions can accept one or more expressions, and when more than one are present the declaration is assumed to be the conjunction of all of those expressions. Constraint declarations take the form shown below:
-\begin{lstlisting}
-Constraint = RawConstraint | Ident '(' ExprArgs ')'
+\begin{Grammar}
+  Constraint :: RawConstraint | Ident '(' ExprArgs ')'
 
-ConstraintOp = 'sys_trans' | 'sys_liveness'
+  ConstraintOp :: 'sys_trans' | 'sys_liveness'
              | 'env_trans' | 'env_liveness' ;
-RawConstraint = ConstraintOp Exprs ;
-\end{lstlisting}
+  RawConstraint :: ConstraintOp Exprs ;
+\end{Grammar}
 
 For example, if you had an input variable named a and an output variable named b that were both Bool-typed, you could enforce this through the following system safety constraint:
 
@@ -156,13 +176,13 @@ In the case where the constraint declaration is a macro invocation (the second c
 \section{Macros}
 
 As there can sometimes be quite a lot of repetition in specifications, Salty supports user-defined macros to name common patterns. The basic structure of a macro is given by the following grammar fragment:
-\begin{lstlisting}
-MacroDecl = 'def' '(' ArgList ')' '=' (Expr | Constraints) ;
+\begin{Grammar}
+  MacroDecl :: 'def' '(' ArgList ')' '=' (Expr | Constraints) ;
 
-ArgList = Identifier | Identifier ',' ArgList | <empty> ;
+  ArgList :: Identifier | Identifier ',' ArgList | <empty> ;
 
-Constraints = Constraint | Constraint 'v;' Constraints ;
-\end{lstlisting}
+  Constraints :: Constraint | Constraint 'v;' Constraints ;
+\end{Grammar}
 
 As you can see from the grammar, the RHS of a macro definition can be either a single expression, or one or more [Constraints]. The reason for this is that macros can be used in two places:
 
