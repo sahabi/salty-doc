@@ -66,14 +66,14 @@ input b : Bool
 
 \section{Types}
 
-The type-language of Salty consists of a few built-in types, and user-defined enumerations. The built-in types are: the function arrow ->, Bool, Int, and Spec. User-defined enumerations will be introduced in the following section.
-
-Bool is the type of boolean-valued expressions, like the constants True and False, as well as inputs and outputs the are introduced with the Bool type.
--> is the type of user-defined macros, and any built-in functions.
-Int is the type of numeric expressions.
-Spec is the type of constraints, which will be defined in the [Constraints] section.
-The types are described by the following grammar:
-
+The type-language of Salty consists of a few built-in types, and user-defined enumerations. The built-in types are: the function arrow $\implies$, Bool, Int, and Spec. User-defined enumerations will be introduced in the following section.
+\begin{enumerate}
+  \item Bool is the type of boolean-valued expressions, like the constants True and False, as well as inputs and outputs the are introduced with the Bool type.
+  \item $\implies$ is the type of user-defined macros, and any built-in functions.
+  \item Int is the type of numeric expressions.
+  \item Spec is the type of constraints, which will be defined in the [Constraints] section.
+  \item The types are described by the following grammar:
+\end{enumerate}
 \begin{Grammar}
   Type :: 'Bool' | 'Int' | UpperIdentifier | Type '->' Type
 \end{Grammar}
@@ -82,13 +82,12 @@ The types are described by the following grammar:
 
 Enumerations allow users to introduce a new type and its values. Sometimes you will have multiple input or output variables whose values are all mutually exclusive. In this case, there are two features that Salty provides to ease implementation:
 
-\begin{itemize}
-
+\begin{enumerate}
 \item You can use the mutex built-in function to show that at most one of a set of variables is allowed to be true
-\item You can define a new enumeration for all of the values, and use one input or output instead of the mutually exclusive group (NOTE: this requires that all variables be either inputs or outputs, but not a mix of the two)
-\end{itemize}
+\item You can define a new enumeration for all of the values, and use one input or output instead of the mutually exclusive group (NOTE: this requires that all variables be either inputs or outputs, but not a mix of the two).
+\end{enumerate}
 
-For the first approach, the resulting controller fragment looks like this:
+\noindent For the first approach, the resulting controller fragment looks like this:
 
 \begin{lstlisting}
 input a : Bool
@@ -97,7 +96,6 @@ input c : Bool
 
 env_trans mutex \{a, b, c\}
 \end{lstlisting}
-
 This states that there are three boolean inputs, and that the environment will only ever assert at most one of them. The mutex function accepts a set of boolean-typed expressions, and produces a boolean-typed expression.
 
 While this approach does work, it doesn't scale well; each input defined in a controller adds to the complexity of the state machine that is produced. Salty provides a way to retain the mutually exclusive characteristics of the input, while lowering the number of variables required through the use of an enumeration. Translating the example above yields:
