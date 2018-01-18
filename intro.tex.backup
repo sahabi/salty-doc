@@ -64,18 +64,15 @@ Once Stack and Slugs are installed, Salty can be built:
 system_prompt> stack build
 \end{lstlisting}
 
-Optionally, you can install Salty globally from inside the source root
-using the \lstinline{stack install} command, which will place the Salty binary 
-in \$HOME/.local/bin. The examples can be built by running \lstinline{make} 
-in the examples/ directory, and will place all of the generated Java code in 
-the examples/build directory.
-
-\newpage
+Optionally, you can install Salty globally using the \lstinline{stack install} 
+command, which will place the Salty binary in \$HOME/.local/bin.
+The examples can be built by running \lstinline{make} in the examples/ directory, 
+and will place all of the generated Java code in the examples/build directory.
 
 \subsection{Running}
 
-You can run \lstinline{salty} with the .salt file as an input along with a 
-suitable option(s). The input options are listed below.
+You can run \lstinline{salty} with the .salt file as an input along with a suitable option(s). 
+The input options are listed below.
 
 \begin{lstlisting}[language=bash]
 system_prompt> salty [OPTIONS] <controller.salt>
@@ -85,25 +82,25 @@ system_prompt> salty [OPTIONS] <controller.salt>
 
 \begin{center}
 \begin{tabular}{l@{\qquad}l}
--h --help                    & Displays the help message \\
--a --annotations             & Outputs information about annotations \\
--j[PACKAGE] --java[=PACKAGE] & Outputs a Java implementation of the controller, as this package\\
--p --python                  & Outputs a Python implementation of the controller\\
--d --dot                     & Outputs a graphviz representation of the controller\\
---cpp[=NAMESPACE]            & Outputs a C++ implementation of the controller\\
+-h --help                    & Display the help message \\
+-a --annotations             & Output information about annotations \\
+-j[PACKAGE] --java[=PACKAGE] & Output a Java implementation of the controller, as this package\\
+-p --python                  & Output a Python implementation of the controller\\
+-d --dot                     & Output a graphviz representation of the controller\\
+--cpp[=NAMESPACE]            & Output a C++ implementation of the controller\\
 -o PATH --output=PATH        & Optional output directory for artifacts\\
 -s PATH --slugs=PATH         & The path to the Slugs executable\\
 -z PATH --z3=PATH            & The path to the Z3 executable\\
 -l N --length=N              & The number of input variables in the slugs output\\
--O NUMBER                    & Enables/disables optimizations by passing 0/1\\
---disable-sanity             & Disables the sanity checker\\
---ddump-parse                & Dumps the parse tree for the controller\\
---ddump-core                 & Dumps the core representation of the type-checked controller\\
---ddump-expanded             & Dumps the expanded form of the controller\\
---ddump-simpl                & Dumps the simplified expanded form of the controller\\
---ddump-opt                  & Dumps the optimized core representation of the type-checked controller\\
---ddump-spec                 & Dumps the input to slugs and its output\\
---ddump-sanity               & Dumps intermediate output during sanity checking\\
+-O NUMBER                    & Enable/disable optimizations by passing 0/1\\
+--disable-sanity             & Disable the sanity checker\\
+--ddump-parse                & Dump the parse tree for the controller\\
+--ddump-core                 & Dump the core representation of the type-checked controller\\
+--ddump-expanded             & Dump the expanded form of the controller\\
+--ddump-simpl                & Dump the simplified expanded form of the controller\\
+--ddump-opt                  & Dump the optimized core representation of the type-checked controller\\
+--ddump-spec                 & Dump the input to slugs and its output\\
+--ddump-sanity               & Dump intermediate output during sanity checking\\
 
 \end{tabular}
 \end{center}

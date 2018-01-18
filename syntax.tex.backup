@@ -1,0 +1,209 @@
+% -*-latex-*-
+
+\section{Lexical Structure}
+
+Salty specifications are organized as a collection of top-level declarations, all belonging to a single controller specification. The declarations are assumed to be un-ordered, so it's perfectly reasonable to use a variable or macro before its declaration.
+
+\subsection{Controllers}
+
+The main compilation unit in Salty is the controller. A controller consists of a types, state variables, macro definitions, and environment/system constraint formulae. When synthesis is successful for a controller specification, it takes the form of a function that accepts values for all of the input variables, and produces values for all of the output variables.
+
+\noindent The syntax for controllers is specified by the following grammar fragment:
+
+\begin{Grammar}
+  Identifier      :: lower-case-letter \textbf{\{} IdentifierRest \textbf{\}} ;
+
+  UpperIdentifier :: upper-case-letter \textbf{\{} IdentifierRest \textbf{\}} ;
+
+  IdentifierRest  :: letter | '0' - '9' | '_' ;
+
+  Controller      :: 'controller' UpperIdentifier 'where' TopDecls ;
+\end{Grammar}
+
+\newpage
+
+\subsection{Layout}
+
+Salty programs use indentation, rather than delimiters to indicate scoping. For example, when introducing system transition formulas, a, b, and c are all within the scope of the sys\_trans block, while d is not.
+
+\begin{lstlisting}
+
+sys_trans
+  a
+  b
+  c
+
+d
+
+\end{lstlisting}
+
+Anywhere that indentation is significant will be explicitly called out in the remainder of this document. Additionally, in any grammar fragment where layout is assumed to separate terminals, the terminals will be separated by a 'v;' terminal.
+
+\section{Top-level Declarations}
+
+All of the top-level declarations in salty are subject to layout. For example, the following program fragment will cause a parse error:
+\begin{lstlisting}
+sys_trans a
+  input b : Bool
+\end{lstlisting}
+\noindent as the sys\_trans and input declarations do not start at the same column. As long as they're consistent, the specification should parse; this is a valid fragment:
+\begin{lstlisting}
+sys_trans a
+input b : Bool
+\end{lstlisting}
+\noindent as is this:
+\begin{lstlisting}
+  sys_trans a
+  input b : Bool
+\end{lstlisting}
+\noindent The top-level declaration grammar is determined by the following grammar fragments:
+\begin{Grammar}
+  TopDecls :: TopDecl | TopDecl 'v;' TopDecls | <empty> ;
+
+  TopDecl :: InputDecl | OutputDecl | EnumDecl
+        | Constraint | MacroDecl ;
+  EnumDecl :: 'enum' UpperIdent '=' UpperIdent { '|' UpperIdent }
+\end{Grammar}
+
+\newpage
+
+\subsection{Types}
+
+The type-language of Salty consists of a few built-in types, and user-defined enumerations. The built-in types are: the function arrow $\implies$, Bool, Int, and Spec. User-defined enumerations will be introduced in the following section.
+\begin{enumerate}
+  \item Bool is the type of boolean-valued expressions, like the constants True and False, as well as inputs and outputs the are introduced with the Bool type.
+  \item $\implies$ is the type of user-defined macros, and any built-in functions.
+  \item Int is the type of numeric expressions.
+  \item Spec is the type of constraints, which will be defined in the [Constraints] section.
+  \item The types are described by the following grammar:
+\end{enumerate}
+\begin{Grammar}
+  Type :: 'Bool' | 'Int' | UpperIdentifier | Type '->' Type
+\end{Grammar}
+
+\subsection{Enumerations}
+
+Enumerations allow users to introduce a new type and its values. Sometimes you will have multiple input or output variables whose values are all mutually exclusive. In this case, there are two features that Salty provides to ease implementation:
+
+\begin{enumerate}
+\item You can use the mutex built-in function to show that at most one of a set of variables is allowed to be true
+\item You can define a new enumeration for all of the values, and use one input or output instead of the mutually exclusive group (NOTE: this requires that all variables be either inputs or outputs, but not a mix of the two).
+\end{enumerate}
+
+\noindent For the first approach, the resulting controller fragment looks like this:
+
+\begin{lstlisting}
+input a : Bool
+input b : Bool
+input c : Bool
+
+env_trans mutex {a, b, c}
+\end{lstlisting}
+This states that there are three boolean inputs, and that the environment will only ever assert at most one of them. The mutex function accepts a set of boolean-typed expressions, and produces a boolean-typed expression.
+
+While this approach does work, it doesn't scale well; each input defined in a controller adds to the complexity of the state machine that is produced. Salty provides a way to retain the mutually exclusive characteristics of the input, while lowering the number of variables required through the use of an enumeration. Translating the example above yields:
+\begin{lstlisting}
+enum T = A | B | C
+input x : T
+\end{lstlisting}
+The choice of names here is arbitrary: T is just the name of the type of the enumeration, and A, B, and C are just chosen to reflect the intent of the original controller. The input name x is not significant.
+
+This yields a controller that only requires two input variables, 
+as the input x is translated into a bit-vector of size two. The 
+result is that as the number of possible cases for an enumeration grow, 
+the size of the bit-vector grows at log\_2 of the number of constructors.
+
+\subsection{Expressions}
+
+Expressions can be constants, variables, macro invocations or combinations of those using built-in operators.
+\begin{Grammar}
+    Exprs :: Expr | Expr 'v;' Exprs
+
+    Constant :: 'True' | 'False' | integer | UpperIdent
+
+    Expr :: Identifier | Number | Constant | Identifier '(' ExprArgs ')'
+     | '{' ExprArgs '}' | 'mutex' Expr | 'all' Expr | 'any' Expr
+     | Expr Op Expr | '!' Expr
+     | 'if' Expr 'then' Expr 'else' Expr
+
+    Op :: '||' | '\/' | '\&\&' | '/\\' | '==' | '->' | '<->'
+
+    ExprArgs :: Expr | Expr ',' Args
+\end{Grammar}
+
+For example, if there is one boolean input, and one boolean output, and you wish to make the value of the output the same as the value of the input, the following controller fragment would achieve that goal:
+
+\begin{lstlisting}
+sys_trans inpVar <-> outVar
+\end{lstlisting}
+\subsubsection{If-then-else}
+
+The if-then-else syntax that Salty provides is just syntactic sugar for the following expression:
+\begin{lstlisting}
+if a then b else c == (a -> b) && (! a -> c)
+\end{lstlisting}
+In some cases, this construct can increase the readability of a specification, but there is no special handling associated with it.
+
+\subsection{Inputs and Outputs}
+
+Input and output declarations define how the controller can interact with the world. Inputs and outputs both follow the same basic structure, but differ in the keyword used to introduce them. The general form is shown below:
+\begin{Grammar}
+  VarDecl :: 'input' | 'output'
+
+  InputDecl :: VarDecl Identifier ':' Type [ InitValue ]
+
+  InitValue :: '=' Expr
+\end{Grammar}
+Both inputs and outputs have optional initial values, which allows the user to constrain the initial state of the state machine produced. If the initial values are left unspecified for either, the resulting state machine can be a little more complicated.
+
+\subsection{Constraints}
+
+The behavior of the desired state machine is described by adding safety and liveness constraints on either the environment or system, as top-level declarations. Each of the constraint declaraions can accept one or more expressions, and when more than one are present the declaration is assumed to be the conjunction of all of those expressions. Constraint declarations take the form shown below:
+\begin{Grammar}
+  Constraint :: RawConstraint | Ident '(' ExprArgs ')'
+
+  ConstraintOp :: 'sys_trans' | 'sys_liveness'
+             | 'env_trans' | 'env_liveness' ;
+  RawConstraint :: ConstraintOp Exprs ;
+\end{Grammar}
+
+For example, if you had an input variable named a and an output variable named b that were both Bool-typed, you could enforce this through the following system safety constraint:
+
+\begin{lstlisting}
+sys_trans a == b
+\end{lstlisting}
+
+In the case where the constraint declaration is a macro invocation (the second case of the Constraint production), the macro must have a result type of Spec, which indicates that it is made up of uses of the raw constraint declarations, or other macros that add constraints.
+
+\subsection{Macros}
+
+As there can sometimes be quite a lot of repetition in specifications, Salty supports user-defined macros to name common patterns. The basic structure of a macro is given by the following grammar fragment:
+\begin{Grammar}
+  MacroDecl :: 'def' '(' ArgList ')' '=' (Expr | Constraints) ;
+
+  ArgList :: Identifier | Identifier ',' ArgList | <empty> ;
+
+  Constraints :: Constraint | Constraint 'v;' Constraints ;
+\end{Grammar}
+
+As you can see from the grammar, the RHS of a macro definition can be either a single expression, or one or more [Constraints]. The reason for this is that macros can be used in two places:
+
+In an expression, where it is being used to compute a single value
+At the top-level, where it is used to name a pattern of constraints
+The second case is useful for giving a name to a complicated property. For example, if you are designing a command for an autonomous agent, and notice that many commands have a similar structure, you can abstract out the parts that differ, and use one top-level macro invocation instead. For example:
+
+\begin{lstlisting}
+def action(enabled, loc, healthy, behavior) =
+  sys_trans
+    (enabled && healthy) ->
+      (behavior_out == behavior && location_out == loc)
+
+  sys_liveness
+    enabled -> behavior_out == behavior
+
+action(command_var == FindTrash, Hallway, BatteryOK == True,
+    Search)
+action(command_var == DeliverTrash, Garage, BatteryOK == True,
+    Transport)
+\end{lstlisting}
+This way, the intent of the sys\_trans and sys\_liveness properties is encoded in the name of the macro, action. Then, it can be used in place of writing those formulae, but instantiated to their specific purpose.

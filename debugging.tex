@@ -1,8 +1,13 @@
-During specification development, you will likely encounter situations where the specification is not realizable. Salty can help a little bit with this, by identifying a few situations that will cause slugs to reject your specification, before realizability is checked.
+During specification development, you will likely encounter situations where the 
+specification is not realizable. Salty can help a little bit with this, 
+by identifying a few situations that will cause slugs to reject your specification, 
+before realizability is checked.
 
 \section{Unsatisfiable Safety Constraints}
 
-As you can specify safety constraints on the environment and system in many different places, it's easy to end up with an unsatisfiable specification. As an example, consider the following specification:
+As you can specify safety constraints on the environment and system in 
+many different places, it's easy to end up with an unsatisfiable specification. 
+As an example, consider the following specification:
 
 \begin{lstlisting}
 controller Example where
@@ -23,9 +28,17 @@ sys_trans ! y1
 sys_trans y2' == !y2
 \end{lstlisting}
 The sanity checker in salty will reject this specification for two reasons:
+\begin{enumerate}
+ \item The environment safety properties are unsatisfiable. This by itself isn't a problem 
+for slugs, as the semantics it uses allow it to produce a controller, as long as the 
+system satisfies its safety properties for at least one step. However, the sanity 
+checker in salty rejects this situation, as it produces a controller that would 
+satisfy system safety for exactly one step, and then behave unpredictably forever.
+ \item The system safety properties are unsatisfiable. This is a problem, as slugs will 
+refuse to synthesize a controller for a specification that will never be able to 
+satisfy its safety properties.
+\end{enumerate}
 
-The environment safety properties are unsatisfiable. This by itself isn't a problem for slugs, as the semantics it uses allow it to produce a controller, as long as the system satisfies its safety properties for at least one step. However, the sanity checker in salty rejects this situation, as it produces a controller that would satisfy system safety for exactly one step, and then behave unpredictably forever.
-The system safety properties are unsatisfiable. This is a problem, as slugs will refuse to synthesize a controller for a specification that will never be able to satisfy its safety properties.
 Salty will output two errors in response to these problems:
 \begin{lstlisting}
 -- [error] --------------------------------------------------
@@ -38,17 +51,28 @@ Salty will output two errors in response to these problems:
     * system safety constraint at example.salt:14,11-14,15
     * system safety constraint at example.salt:13,13-13,15
 \end{lstlisting}
-The errors attempt to report a minimal set of conflicting safety properties, to aid specification debugging; the errors above don't mention the safety properties on lines 11 and 15 because they are not contributing to the unsatisfiability of the environment or system.
+The errors attempt to report a minimal set of conflicting safety properties, 
+to aid specification debugging; the errors above don't mention the safety properties 
+on lines 11 and 15 because they are not contributing to the unsatisfiability of 
+the environment or system.
 
-\section{Unsatisfiable initial constraints}
+\section{Unsatisfiable Initial Constraints}
 
-Once salty has managed to determine that the safety properties of the system are satisfiable, it will continue by checking the initial state of the controller. If any of the initial value constraints for state variables cause the environment or system safety properties to become unsatisfiable, an error is raised.
+Once salty has managed to determine that the safety properties of the system are 
+satisfiable, it will continue by checking the initial state of the controller. 
+If any of the initial value constraints for state variables cause the environment 
+or system safety properties to become unsatisfiable, an error is raised.
 
-Although slugs would be able to synthesize a controller whose variable initialization violated environmental safety properties, salty considers that to be an error. The reasoning for this is the same as when checking environmental safety properties for satisfiability: if the controller produced would only satisfy its system safety properties for a single time step, that is not a useful controller.
+Although slugs would be able to synthesize a controller whose variable initialization 
+violated environmental safety properties, salty considers that to be an error. 
+The reasoning for this is the same as when checking environmental safety properties 
+for satisfiability: if the controller produced would only satisfy its system safety 
+properties for a single time step, that is not a useful controller.
 
-\section{Liveness properties that eventually violate safety}
+\section{Unsafe Liveness Properties}
 
-Liveness properties in the system and environment can eventually cause safety properties to be violated. Consider this example specification:
+Liveness properties in the system and environment can eventually cause safety 
+properties to be violated. Consider this example specification:
 \begin{lstlisting}
 controller Example where
 
@@ -58,8 +82,17 @@ env_trans ! a
 
 env_liveness a
 \end{lstlisting}
-This specification will generate a warning, because it will eventually violate its environmental safety properties. The reason that this isn't rejected is that the semantics of slugs requires that the system be able to satisfy its safety properties during the state transition when the environment violates its own. All states after that are allowed to violate system safety.
+This specification will generate a warning, because it will eventually violate its 
+environmental safety properties. The reason that this isn't rejected is that the 
+semantics of slugs requires that the system be able to satisfy its safety properties 
+during the state transition when the environment violates its own. All states after 
+that are allowed to violate system safety.
 
-If we augment the same example with a system safety property that will be violated by a liveness property, this will also produce a warning, as salty is not able to tell if the environment or the system would violate safety first. As a result, this specification will still be sent to slugs, and may be unrealizable.
+If we augment the same example with a system safety property that will be violated 
+by a liveness property, this will also produce a warning, as salty is not able to 
+tell if the environment or the system would violate safety first. As a result, this 
+specification will still be sent to slugs, and may be unrealizable.
 
-However, if there is a liveness property that would cause a system safety violation, and no environment safety violation can be established, the sanity checker generates an error and salty rejects the specification.
+However, if there is a liveness property that would cause a system safety violation, 
+and no environment safety violation can be established, the sanity checker generates 
+an error and salty rejects the specification.

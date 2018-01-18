@@ -86,9 +86,7 @@ sys_trans
 
 we save the file as middleware.salt
 
-\section{Synthesis} 
-
-\subsection{Python}
+\section{Synthesis: Python} 
 
 \begin{lstlisting}
 salty bla bla
@@ -113,7 +111,7 @@ The file can be used this way
 xxx
 \end{lstlisting}
 
-\subsection{Java}
+\section{Synthesis: Java} 
 
 This will generate the file xxx
 
@@ -135,7 +133,7 @@ The file can be used this way
 xxx
 \end{lstlisting}
 
-\subsection{C++}
+\section{Synthesis: C++} 
 
 This will generate the file xxx
 
